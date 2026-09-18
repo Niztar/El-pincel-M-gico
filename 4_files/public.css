@@ -1,0 +1,112 @@
+/* ── Floats — Frontend ───────────────────────────────────── */
+
+#fcwg-root {
+    position: fixed;
+    z-index: 9999;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+}
+
+/* ── Widget container ──────────────────────────────────────────────────────── */
+.fcwg-widget {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: all;
+}
+
+/* Position */
+.fcwg-widget.fcwg-pos-bottom-right  { bottom: 24px; right: 24px; align-items: flex-end; }
+.fcwg-widget.fcwg-pos-bottom-left   { bottom: 24px; left:  24px; align-items: flex-start; }
+.fcwg-widget.fcwg-pos-bottom-center { bottom: 24px; left: 50%; transform: translateX(-50%); align-items: center; }
+
+/* ── Channel button ────────────────────────────────────────────────────────── */
+.fcwg-channel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
+    width:         var(--ch-size, 54px);
+    height:        var(--ch-size, 54px);
+    border-radius: var(--ch-radius, 50%);
+    background:    var(--ch-color, #244b8e);
+    box-shadow:    var(--ch-shadow, 0 4px 16px rgba(0,0,0,.25));
+    transition: transform .2s;
+    flex-shrink: 0;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+}
+.fcwg-channel-btn:hover  { transform: scale(1.08); }
+.fcwg-channel-btn:active { transform: scale(.94);  }
+
+/* Icon wrapper */
+.fcwg-channel-btn .fcwg-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.fcwg-channel-btn .fcwg-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+/* Label chip */
+.fcwg-channel-btn__label {
+    position: absolute;
+    right: calc(100% + 10px);
+    background: #1e293b;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(4px);
+    transition: opacity .15s, transform .15s;
+}
+.fcwg-pos-bottom-left .fcwg-channel-btn__label {
+    right: auto;
+    left: calc(100% + 10px);
+    transform: translateX(-4px);
+}
+.fcwg-channel-btn:hover .fcwg-channel-btn__label { opacity: 1; transform: translateX(0); }
+
+/* ── Animations (first button only) ───────────────────────────────────────── */
+@keyframes fcwgPulse {
+    0%, 100% { box-shadow: var(--ch-shadow, 0 4px 16px rgba(0,0,0,.25)), 0 0 0 0 rgba(0,0,0,.2); }
+    50%       { box-shadow: var(--ch-shadow, 0 4px 16px rgba(0,0,0,.25)), 0 0 0 10px rgba(0,0,0,0); }
+}
+@keyframes fcwgBounce {
+    0%, 100% { transform: translateY(0);   }
+    25%       { transform: translateY(-6px); }
+    75%       { transform: translateY(-3px); }
+}
+@keyframes fcwgShake {
+    0%, 100% { transform: rotate(0deg);  }
+    20%       { transform: rotate(-8deg); }
+    40%       { transform: rotate(8deg);  }
+    60%       { transform: rotate(-4deg); }
+    80%       { transform: rotate(4deg);  }
+}
+.fcwg-channel-btn--anim-pulse  { animation: fcwgPulse  2.5s ease-in-out infinite; }
+.fcwg-channel-btn--anim-bounce { animation: fcwgBounce 2s   ease-in-out infinite; }
+.fcwg-channel-btn--anim-shake  { animation: fcwgShake  3s   ease-in-out infinite; }
+
+/* ── Accessibility ─────────────────────────────────────────────────────────── */
+.fcwg-channel-btn:focus-visible {
+    outline: 3px solid #f59e0b;
+    outline-offset: 2px;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .fcwg-widget.fcwg-pos-bottom-right  { bottom: 16px; right: 16px; }
+    .fcwg-widget.fcwg-pos-bottom-left   { bottom: 16px; left:  16px; }
+    .fcwg-widget.fcwg-pos-bottom-center { bottom: 16px; }
+}

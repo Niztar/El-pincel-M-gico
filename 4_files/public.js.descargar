@@ -1,0 +1,141 @@
+/* Floats — Frontend */
+(function () {
+    'use strict';
+
+    var cfg     = window.FCWG_Public || {};
+    var widgets = cfg.widgets || [];
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    function init () {
+        widgets.forEach(initWidget);
+
+        // Delegated handler. This fixes themes/builders that replace or move the
+        // float markup after DOMContentLoaded.
+        document.addEventListener('click', handleChannelClick, true);
+    }
+
+    function initWidget (w) {
+        var el = document.querySelector('.fcwg-widget--' + w.id);
+        if (!el) return;
+
+        var settings = w.settings || {};
+        var delay  = (settings.delay || 0) * 1000;
+        var scroll = settings.scroll_trigger || 0;
+
+        function show () {
+            el.style.visibility = 'visible';
+            el.style.opacity    = '1';
+            el.style.transition = 'opacity .4s ease';
+        }
+
+        function attemptShow () {
+            if (scroll > 0 && window.scrollY < scroll) return;
+            show();
+            window.removeEventListener('scroll', attemptShow);
+        }
+
+        if (delay > 0 || scroll > 0) {
+            el.style.visibility = 'hidden';
+            el.style.opacity    = '0';
+            if (scroll > 0) window.addEventListener('scroll', attemptShow, { passive: true });
+            if (delay > 0)  setTimeout(attemptShow, delay);
+        }
+    }
+
+    function handleChannelClick (e) {
+        var btn = e.target.closest && e.target.closest('.fcwg-channel-btn[data-channel]');
+        if (!btn) return;
+
+        var channel = btn.dataset.channel || '';
+        var widget  = btn.dataset.widget || '';
+        var href    = btn.dataset.channelUrl || btn.getAttribute('href') || '';
+
+        trackClick(widget, channel);
+
+        if (!href || href === '#') {
+            e.preventDefault();
+            e.stopPropagation();
+            if (window.console && console.warn) {
+                console.warn('Floats channel has no value configured:', channel);
+            }
+            return false;
+        }
+
+        // Force navigation ourselves instead of relying on the theme/browser to
+        // honor the anchor. Some WordPress themes/builders intercept floating
+        // button clicks.
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+
+        openChannelUrl(href, btn);
+        return false;
+    }
+
+    function openChannelUrl (href, btn) {
+        href = String(href || '').trim();
+        if (!href || href === '#') return;
+
+        var isDirectScheme = /^(tel:|mailto:|sms:|viber:|weixin:|line:|skype:|facetime:)/i.test(href);
+        var isHttp = /^https?:\/\//i.test(href);
+        var targetBlank = btn && (btn.target === '_blank' || btn.getAttribute('target') === '_blank');
+
+        try {
+            if (isDirectScheme) {
+                window.location.assign(href);
+                return;
+            }
+
+            if (isHttp) {
+                if (targetBlank) {
+                    // WhatsApp and Telegram open more reliably in a new tab/app
+                    // handoff from a user click.
+                    //
+                    // Note: passing 'noopener' to window.open() makes it return null
+                    // even when the tab opens successfully (per spec, there's no
+                    // reference to give back). That made the "popup blocked?" check
+                    // below always true, so every click ALSO navigated the current
+                    // tab via window.location.assign(href) — i.e. the reported
+                    // "opens new tab AND current tab" bug. Open without 'noopener' so
+                    // we get a real reference back, then sever window.opener manually
+                    // for the same security benefit.
+                    var opened = window.open(href, '_blank');
+                    if (opened) {
+                        opened.opener = null;
+                    } else {
+                        window.location.assign(href);
+                    }
+                } else {
+                    window.location.assign(href);
+                }
+                return;
+            }
+
+            window.location.assign(href);
+        } catch (err) {
+            window.location.href = href;
+        }
+    }
+
+    function trackClick (widgetId, channelKey) {
+        if (!cfg.ajax_url) return;
+        try {
+            var fd = new FormData();
+            fd.append('action',      'fcwg_track_click');
+            fd.append('nonce',       cfg.nonce    || '');
+            fd.append('widget_id',   widgetId     || '');
+            fd.append('channel_key', channelKey   || '');
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(cfg.ajax_url, fd);
+            } else if (window.fetch) {
+                fetch(cfg.ajax_url, { method: 'POST', body: fd, credentials: 'same-origin' });
+            }
+        } catch (err) {}
+    }
+
+}());
